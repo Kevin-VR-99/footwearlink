@@ -6,7 +6,7 @@ use App\Support\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class GuardarProductoRequest extends FormRequest
+class GuardarLineaRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,34 +18,24 @@ class GuardarProductoRequest extends FormRequest
         $esCreacion = $this->isMethod('POST');
         $requerido = $esCreacion ? 'required' : 'sometimes';
 
-        $reglas = [
-            'modelo'      => [$requerido, 'string', 'max:120'],
-            'nombre'      => [$requerido, 'string', 'max:200'],
+        return [
+            'campana_id' => [
+                $esCreacion ? 'required' : 'prohibited',
+                'integer',
+                Rule::exists('campanas', 'id')->where(
+                    fn($q) => $q->where('distribuidora_id', Tenant::id())
+                ),
+            ],
+            'nombre' => [$requerido, 'string', 'max:150'],
             'descripcion' => ['nullable', 'string'],
-            'activo'      => ['sometimes', 'boolean'],
-            'categoria_id' => [
-                $requerido,
-                'integer',
-                Rule::exists('categorias_producto', 'id')->where(
-                    fn($q) => $q->where('distribuidora_id', Tenant::id())
-                ),
-            ],
-            'linea_id' => [
-                $requerido,
-                'integer',
-                Rule::exists('lineas', 'id')->where(
-                    fn($q) => $q->where('distribuidora_id', Tenant::id())
-                ),
-            ],
-            'marca_id' => [
-                $requerido,
+            'activa' => ['sometimes', 'boolean'],
+            'marca_ids' => ['sometimes', 'array'],
+            'marca_ids.*' => [
                 'integer',
                 Rule::exists('marcas', 'id')->where(
                     fn($q) => $q->where('distribuidora_id', Tenant::id())
                 ),
             ],
         ];
-
-        return $reglas;
     }
 }
